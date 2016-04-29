@@ -1,0 +1,27 @@
+{
+    "name": "DiscordSpotifyPlayer",
+    "version": "1.0.0",
+    "description": "Spotify Player for Discord",
+    "author": {
+        "name": "Gaylord O'Connor",
+        "email": "insert@email.here",
+        "url": "https://github.com/Farami"
+    },
+    "contributors": [
+        {
+            "name": "Timo",
+            "email": "tklein243@gmail.com",
+            "url": "https://github.com/slowChildPlaying"
+        }
+    ],
+    "license": "MIT",
+    "dependencies": {
+        "discord.js": "5.3.x",
+        "express": "4.13.x",
+        "q": "1.4.x",
+        "request": "2.72.x"
+    },
+    "engines": {
+        "node": "5.9.1"
+    }
+}
