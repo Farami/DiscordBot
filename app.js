@@ -1,6 +1,6 @@
 'use strict';
-var bot = require('./bot.js');
+var bot = require('./src/bot.js');
 var fs = require('fs');
+var configFile = require('./src/config.json');
 
-var config = JSON.parse(fs.readFileSync('./config.json'), 'utf8');
-bot.init(config.email, config.password);
+bot.init(configFile.discordEmail, configFile.discordPassword);
