@@ -5,13 +5,15 @@ const request = require('request');
 
 module.exports = class JokeModule extends DiscordBotModule {
     constructor(discordClient) {
-        let commands = ['joke'];
+        let commands = ['joke', 'repeatedJokes', 'stopJokes'];
         super("JokeModule", commands, discordClient);
     }
 
     joke(message, params) {
-        if (params.length === 0) {
-            params[0] = randomKey(config.sources);
+        if (params === undefined || params.length === 0) {
+            params = new Array();
+            var keys = Object.keys(config.sources);
+            params[0] = keys[keys.length * Math.random() << 0];
         }
 
         try {
@@ -22,13 +24,23 @@ module.exports = class JokeModule extends DiscordBotModule {
                 }
             });
         } catch (err) {
-            this.discordClient.reply(message, "Error: Service down or unknown source.");
+            this.discordClient.reply(message, 'Error: Service down or unknown source.');
         }
     }
-};
 
+    repeatedJokes(message, params) {
+        if (params === undefined || params.length === 0) {
+            params = new Array();
+            params[0] = 5;
+        }
 
-var randomKey = function (obj) {
-    var keys = Object.keys(obj);
-    return keys[keys.length * Math.random() << 0];
+        let that = this;
+        this.jokeTimer = setInterval(() => that.joke(message), params[0] * 1000);
+        this.discordClient.reply(message, 'Posting joke every ' + params[0] + ' seconds');
+    }
+
+    stopJokes(message, params) {
+        this.discordClient.reply(message, 'Aww.');
+        clearInterval(this.jokeTimer);
+    }
 };
