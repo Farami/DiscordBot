@@ -30,9 +30,16 @@ module.exports = class MessageHandler {
         var command = message.content.split(' ')[0].substring(1);
         var params = message.content.split(' ');
 
-        // if (command === 'modules') {
-        //     this.client.
-        // }
+        if (command === 'modules') {
+            var text = '\nCurrently installed modules: \n';
+
+            for (let m of this.modules) {
+                text += '- ' + m.name + "\n";
+            }
+
+            this.client.reply(message, text);
+            return;
+        }
 
         // remove command from params
         params.shift();
@@ -43,5 +50,4 @@ module.exports = class MessageHandler {
             }
         }
     }
-
 };
