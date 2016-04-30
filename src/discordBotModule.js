@@ -10,7 +10,9 @@ module.exports = class DiscordBotModule {
         this.name = name;
     }
 
-    name() { return this.name; }
+    name() {
+        return this.name;
+    }
 
     commands() {
         return this.commandList;

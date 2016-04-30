@@ -9,9 +9,9 @@ module.exports = class MessageHandler {
         this.modules = [];
     }
 
-    registerModule(module) {
-        console.log('module ' + module.name() + ' registered.');
-        this.modules.push(module);
+    registerModule(mod) {
+        console.log('module ' + mod.name + ' registered.');
+        this.modules.push(mod);
     }
 
     handleMessage(message) {
@@ -29,6 +29,10 @@ module.exports = class MessageHandler {
 
         var command = message.content.split(' ')[0].substring(1);
         var params = message.content.split(' ');
+
+        // if (command === 'modules') {
+        //     this.client.
+        // }
 
         // remove command from params
         params.shift();

@@ -2,14 +2,15 @@
 const lame = require('lame');
 const Spotify = require('spotify-web');
 const DiscordBotModule = require('../discordBotModule.js');
+const config = require('./spotifyModule.json');
 
 module.exports = class SpotifyModule extends DiscordBotModule {
-    constructor(username, password, discordClient) {
+    constructor(discordClient) {
         let commands = ['init', 'play', 'pause'];
 
-        super(commands, discordClient);
-        this.username = username;
-        this.password = password;
+        super("SpotifyModule", commands, discordClient);
+        this.username = config.username;
+        this.password = config.password;
     }
 
     init(message, params) {
