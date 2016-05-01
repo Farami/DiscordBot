@@ -8,17 +8,16 @@ module.exports = class MessageHandler {
     this.modules = [];
   }
 
-  registerModule(mod) {
-    console.log('module ' + mod.name + ' registered.');
-    this.modules.push(mod);
+  registerModule(m) {
+    console.log('module ' + m.name + ' registered.');
+    this.modules.push(m);
   }
 
   handleMessage(message) {
     console.log('handledMessage got called with: ' + message);
-    var that = this;
 
     // dont answer my own messages
-    if (message.author === that.client.user) {
+    if (message.author === this.client.user) {
       return;
     }
 
@@ -26,27 +25,28 @@ module.exports = class MessageHandler {
       return;
     }
 
-    var command = message.content.split(' ')[0].substring(1);
-    var params = message.content.split(' ');
+    let params = message.content.split(' ');
+    let command = params.shift();
 
     if (command === 'modules') {
-      var text = '\nCurrently installed modules: \n';
-
-      for (let m of this.modules) {
-        text += '- ' + m.name + '\n';
-      }
-
-      this.client.reply(message, text);
+      this.handleModulesCommand(message);
       return;
     }
-
-    // remove command from params
-    params.shift();
 
     for (let m of this.modules) {
       if (inArray(m.commands(), command)) {
         m[command](message, params);
       }
     }
+  }
+
+  handleModulesCommand(message) {
+    let text = '\nCurrently installed modules: \n';
+
+    for (let m of this.modules) {
+      text += '- ' + m.name + '\n';
+    }
+
+    this.client.reply(message, text);
   }
 };
