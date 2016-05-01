@@ -1,6 +1,6 @@
 {
-    "sources": {
-        "joke": "http://tambal.azurewebsites.net/joke/random",
-        "yomomma": "http://api.yomomma.info/"
-    }
+  "sources": {
+    "joke": "http://tambal.azurewebsites.net/joke/random",
+    "yomomma": "http://api.yomomma.info/"
+  }
 }

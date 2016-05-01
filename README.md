@@ -1,4 +1,5 @@
 # SpotifyDiscordBot
+[![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](http://standardjs.com)
 
 ## Modules
 To write a module simply create a .js file inside the src/modules folder.

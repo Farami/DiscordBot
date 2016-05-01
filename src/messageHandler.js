@@ -1,53 +1,52 @@
 'use strict';
 const configFile = require('./config.json');
-const Discord = require('discord.js');
 const inArray = require('in-array');
 
 module.exports = class MessageHandler {
-    constructor(client) {
-        this.client = client;
-        this.modules = [];
+  constructor(client) {
+    this.client = client;
+    this.modules = [];
+  }
+
+  registerModule(mod) {
+    console.log('module ' + mod.name + ' registered.');
+    this.modules.push(mod);
+  }
+
+  handleMessage(message) {
+    console.log('handledMessage got called with: ' + message);
+    var that = this;
+
+    // dont answer my own messages
+    if (message.author === that.client.user) {
+      return;
     }
 
-    registerModule(mod) {
-        console.log('module ' + mod.name + ' registered.');
-        this.modules.push(mod);
+    if (!message.content.startsWith(configFile.messagePrefix)) {
+      return;
     }
 
-    handleMessage(message) {
-        console.log('handledMessage got called with: ' + message);
-        var that = this;
+    var command = message.content.split(' ')[0].substring(1);
+    var params = message.content.split(' ');
 
-        // dont answer my own messages
-        if (message.author === that.client.user) {
-            return;
-        }
+    if (command === 'modules') {
+      var text = '\nCurrently installed modules: \n';
 
-        if (!message.content.startsWith(configFile.messagePrefix)) {
-            return;
-        }
+      for (let m of this.modules) {
+        text += '- ' + m.name + '\n';
+      }
 
-        var command = message.content.split(' ')[0].substring(1);
-        var params = message.content.split(' ');
-
-        if (command === 'modules') {
-            var text = '\nCurrently installed modules: \n';
-
-            for (let m of this.modules) {
-                text += '- ' + m.name + "\n";
-            }
-
-            this.client.reply(message, text);
-            return;
-        }
-
-        // remove command from params
-        params.shift();
-
-        for (let m of this.modules) {
-            if (inArray(m.commands(), command)) {
-                m[command](message, params);
-            }
-        }
+      this.client.reply(message, text);
+      return;
     }
+
+    // remove command from params
+    params.shift();
+
+    for (let m of this.modules) {
+      if (inArray(m.commands(), command)) {
+        m[command](message, params);
+      }
+    }
+  }
 };
