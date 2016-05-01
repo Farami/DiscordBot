@@ -26,7 +26,7 @@ module.exports = class MessageHandler {
     }
 
     let params = message.content.split(' ');
-    let command = params.shift();
+    let command = params.shift().substring(1);
 
     if (command === 'modules') {
       this.handleModulesCommand(message);

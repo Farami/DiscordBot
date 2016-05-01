@@ -1,16 +1,17 @@
 'use strict';
-const lame = require('lame');
 const Spotify = require('spotify-web');
 const DiscordBotModule = require('../discordBotModule.js');
 const config = require('./spotifyModule.json');
 
 module.exports = class SpotifyModule extends DiscordBotModule {
   constructor(discordClient) {
-    let commands = ['init', 'play', 'pause'];
+    let commands = ['init', 'play', 'np', 'playPreview', 'stop'];
 
     super('SpotifyModule', commands, discordClient);
     this.username = config.username;
     this.password = config.password;
+    this.nowPlaying = false;
+    this.isInit = false;
   }
 
   init(message, params) {
@@ -19,25 +20,31 @@ module.exports = class SpotifyModule extends DiscordBotModule {
         if (channel.name === 'Noobs') {
           this.discordClient.joinVoiceChannel(channel).catch(function (error) { console.log(error); });
           this.discordClient.reply(message, 'Joined voice channel ' + channel.name);
+          this.voiceChannel = channel;
           break;
         }
       }
     }
+
+    this.isInit = true;
   }
 
   play(message, params) {
-    let that = this;
+    if (!this.isInit) {
+      this.init(message, params);
+    }
+
     if (params.length === 0) {
       params[0] = 'spotify:track:4w6Y6WiZxAsKT9OPJiTlpe';
     }
 
+    let that = this;
     Spotify.login(this.username, this.password, function (err, spotify) {
       if (err) {
         that.discordClient.reply(message, err);
         return;
       }
 
-      // first get a "Track" instance from the track URI
       try {
         spotify.get(params[0], function (err, track) {
           if (err) {
@@ -45,13 +52,18 @@ module.exports = class SpotifyModule extends DiscordBotModule {
             return;
           }
 
+          if (that.nowPlaying) {
+            that.discordClient.voiceConnection.stopPlaying();
+          }
+
+          that.currentTrack = track;
           that.discordClient.reply(message, 'Playing: ' + track.artist[0].name + ' - ' + track.name);
-          that.discordClient.voiceConnection.playRawStream(track
-            .play()
-            .on('error', function (err) {
-              that.discordClient.reply(message, err);
-            })
-            .pipe(new lame.Decoder()));
+          let stream = track.play()
+            .on('error', function (err) { that.discordClient.reply(message, err); })
+            .on('end', function () { that.nowPlaying = false; });
+
+          that.discordClient.voiceConnection.playRawStream(stream, { volume: 0.25 });
+          that.nowPlaying = true;
         });
       } catch (err) {
         that.discordClient.reply(message, err);
@@ -59,7 +71,25 @@ module.exports = class SpotifyModule extends DiscordBotModule {
     });
   }
 
-  pause(message, params) {
+  stop(message, params) {
+    if (!this.nowPlaying) {
+      return;
+    }
 
+    try {
+      this.discordClient.voiceConnection.stopPlaying();
+      this.discordClient.reply(message, 'Playback stopped.');
+      this.nowPlaying = false;
+    } catch (err) {
+
+    }
+  }
+
+  np(message, params) {
+    if (!this.nowPlaying) {
+      this.discordClient.reply(message, 'I am not playing anything right now.');
+    } else {
+      this.discordClient.reply(message, 'Now playing: ' + this.currentTrack.artist[0].name + ' - ' + this.currentTrack.name);
+    }
   }
 };
