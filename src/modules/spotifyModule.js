@@ -12,6 +12,7 @@ module.exports = class SpotifyModule extends DiscordBotModule {
     this.password = config.password;
     this.nowPlaying = false;
     this.isInit = false;
+    this.queuedTracks = [];
   }
 
   init(message, params) {
@@ -38,6 +39,12 @@ module.exports = class SpotifyModule extends DiscordBotModule {
       params[0] = 'spotify:track:4w6Y6WiZxAsKT9OPJiTlpe';
     }
 
+    if (this.nowPlaying) {
+      this.queuedTracks.push(params[0]);
+      this.discordClient.reply(message, 'Already playing. Added song to queue at position ' + this.queuedTracks.length) + '.';
+      return;
+    }
+
     let that = this;
     Spotify.login(this.username, this.password, function (err, spotify) {
       if (err) {
@@ -52,15 +59,24 @@ module.exports = class SpotifyModule extends DiscordBotModule {
             return;
           }
 
-          if (that.nowPlaying) {
-            that.discordClient.voiceConnection.stopPlaying();
-          }
+
 
           that.currentTrack = track;
           that.discordClient.reply(message, 'Playing: ' + track.artist[0].name + ' - ' + track.name);
           let stream = track.play()
-            .on('error', function (err) { that.discordClient.reply(message, err); })
-            .on('end', function () { that.nowPlaying = false; });
+            .on('error', function (err) {
+              that.discordClient.reply(message, err);
+              that.nowPlaying = false;
+              if (that.queuedTracks.length > 0) {
+                that.play(message, [that.queuedTracks.pop()]);
+              }
+            })
+            .on('end', function () {
+              that.nowPlaying = false;
+              if (that.queuedTracks.length > 0) {
+                that.play(message, [that.queuedTracks.pop()]);
+              }
+            });
 
           that.discordClient.voiceConnection.playRawStream(stream, { volume: 0.25 });
           that.nowPlaying = true;
