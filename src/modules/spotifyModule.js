@@ -27,9 +27,8 @@ module.exports = class SpotifyModule extends DiscordBotModule {
 
     play(message, params) {
         let that = this;
-        this.discordClient.reply(message, 'Called play.');
-        if (params === undefined) {
-            params = new Array('spotify:track:4w6Y6WiZxAsKT9OPJiTlpe');
+        if (params.length === 0) {
+            params[0] = 'spotify:track:4w6Y6WiZxAsKT9OPJiTlpe';
         }
 
         Spotify.login(this.username, this.password, function (err, spotify) {
@@ -40,7 +39,7 @@ module.exports = class SpotifyModule extends DiscordBotModule {
 
             // first get a "Track" instance from the track URI
             try {
-                spotify.get(parameter, function (err, track) {
+                spotify.get(params[0], function (err, track) {
                     if (err) {
                         that.client.reply(message, err);
                         return;
@@ -50,7 +49,7 @@ module.exports = class SpotifyModule extends DiscordBotModule {
                     that.discordClient.voiceConnection.playRawStream(track
                         .play()
                         .on('error', function (err) {
-                            that.client.reply(message, err);
+                            that.discordClient.reply(message, err);
                         })
                         .pipe(new lame.Decoder()));
                 });

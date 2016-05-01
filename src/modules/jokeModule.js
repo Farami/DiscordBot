@@ -10,10 +10,9 @@ module.exports = class JokeModule extends DiscordBotModule {
     }
 
     joke(message, params) {
-        if (params === undefined || params.length === 0) {
-            params = new Array();
-            var keys = Object.keys(config.sources);
-            params[0] = keys[keys.length * Math.random() << 0];
+        if (params.length === 0) {
+            // gets a random key from the sources
+            params[0] = Object.keys(config.sources)[keys.length * Math.random() << 0];
         }
 
         try {
@@ -29,8 +28,7 @@ module.exports = class JokeModule extends DiscordBotModule {
     }
 
     repeatedJokes(message, params) {
-        if (params === undefined || params.length === 0) {
-            params = new Array();
+        if (params.length === 0) {
             params[0] = 5;
         }
 
