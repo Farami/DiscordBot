@@ -14,20 +14,38 @@ module.exports = class SpotifyHelper {
 
     function resolve(err, spotify) {
       if (err) {
-        deferred.reject(err);
-        return;
+        return deferred.reject(err);
       }
 
-      deferred.resolve(spotify);
+      return deferred.resolve(spotify);
     }
 
     return deferred.promise;
   };
 
+  getAlbumTracks(albumUri) {
+    var deferred = Q.defer();
+    this.get(albumUri).then(function (album) {
+      let tracks = [];
+      album.disc.forEach(function (disc) {
+        if (!Array.isArray(disc.track)) {
+          return;
+        }
+
+        tracks.push.apply(tracks, disc.track);
+      });
+
+      let trackUris = tracks.map(function (value) { return value.uri; });
+      return deferred.resolve(trackUris);
+    });
+
+    return deferred.promise;
+  }
+
   get(trackUrl) {
     var deferred = Q.defer();
 
-    this.login().then(get).fail(deferred.reject);
+    this.login().then(get, deferred.reject);
 
     function get(spotify) {
       spotify.get(trackUrl, resolve);
@@ -35,11 +53,10 @@ module.exports = class SpotifyHelper {
 
     function resolve(err, track) {
       if (err) {
-        deferred.reject(err);
-        return;
+        return deferred.reject(err);
       }
 
-      deferred.resolve(track);
+      return deferred.resolve(track);
     };
 
     return deferred.promise;
