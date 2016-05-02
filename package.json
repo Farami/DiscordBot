@@ -16,7 +16,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "discord.js": "https://github.com/hydrabolt/discord.js.git#master",
+    "discord.js": "https://github.com/hydrabolt/discord.js.git#indev",
     "express": "4.13.x",
     "in-array": "^0.1.2",
     "q": "1.4.x",

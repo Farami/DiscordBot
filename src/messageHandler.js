@@ -21,6 +21,10 @@ module.exports = class MessageHandler {
       return;
     }
 
+    if (message.author.username === 'Risenx') {
+      return;
+    }
+
     if (!message.content.startsWith(configFile.messagePrefix)) {
       return;
     }
