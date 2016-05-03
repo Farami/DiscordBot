@@ -6,7 +6,7 @@ const Q = require('Q');
 
 module.exports = class SpotifyModule extends DiscordBotModule {
   constructor(discordClient) {
-    let commands = ['init', 'play', 'np', 'skip', 'stop', 'volume'];
+    let commands = ['init', 'play', 'np', 'skip', 'stop', 'volume', 'queue'];
     super('SpotifyModule', commands, discordClient);
 
     this.isPlaying = false;
@@ -15,14 +15,41 @@ module.exports = class SpotifyModule extends DiscordBotModule {
     this.currentVolume = 0.25;
     this.spotifyHelper = new SpotifyHelper(config.username, config.password);
 
-    this.formatTrack = (track) => track.artist[0].name + ' - ' + track.name;
+    this._getTracks = (uri) => {
+      let q = Q.defer();
+      let that = this;
+
+      let uriType = this.spotifyHelper.uriType(uri);
+      switch (uriType) {
+        case 'track':
+          this.spotifyHelper.get(uri).then(function (track) {
+            return q.resolve([track]);
+          });
+          break;
+        case 'album':
+          this.spotifyHelper.getAlbumTracks(uri).then(function (tracks) {
+            return q.resolve(tracks);
+          });
+          break;
+        case 'playlist':
+          this.spotifyHelper.getPlaylistTracks(uri).then(function (trackUris) {
+            return that.spotifyHelper.get(trackUris);
+          }).then(function (tracks) {
+            return q.resolve(tracks);
+          });
+          break;
+        default:
+          return q.reject('unsupported uri type ' + uriType);
+      }
+
+      return q.promise;
+    };
 
     this._play = (message, params) => {
-      var deferred = Q.defer();
       let that = this;
 
       if (params === null || params.length === 0) {
-        return deferred.reject(new Error('Please provide a song.'));
+        return that.discordClient.reply(message, 'Please provide a song.');
       }
 
       // when the parameter is already a track object don't get the track again, just play it
@@ -37,75 +64,48 @@ module.exports = class SpotifyModule extends DiscordBotModule {
         }
       }
 
-      var uriType = this.spotifyHelper.uriType(params[0]);
-      switch (uriType) {
-        case 'track':
-          this.spotifyHelper.get(params[0]).then(playOne, handleError);
-          break;
-        case 'album':
-          let albumTracks = this.spotifyHelper.getAlbumTracks(params[0]);
+      this._getTracks(params[0]).then(function (tracks) {
+        if (shuffle) {
+          tracks = that.spotifyHelper.shuffle(tracks);
+        }
 
-          if (shuffle) {
-            that.discordClient.reply(message, 'shuffling playlist.');
-            albumTracks.then(that.spotifyHelper.shuffle);
-          }
-          albumTracks.then(playMultiple, handleError);
-          break;
-        case 'playlist':
-          let playlistTracks = this.spotifyHelper.getPlaylistTracks(params[0]);
-
-          if (shuffle) {
-            that.discordClient.reply(message, 'shuffling playlist.');
-            playlistTracks.then(that.spotifyHelper.shuffle);
-          }
-
-          playlistTracks.then(playMultiple, handleError);
-          break;
-        default:
-          return deferred.reject('unsupported uri type ' + uriType);
-      }
-
-      function handleError(err) {
-        return deferred.reject(new Error(err));
-      }
+        playMultiple(tracks);
+      });
 
       function playMultiple(tracks) {
         if (!that.isPlaying) {
-          that.play(message, [tracks.shift()]);
+          playOne(tracks.shift());
         }
 
-        for (let track of tracks) {
-          that.queuedTracks.push(track);
+        if (tracks.length === 0) {
+          return;
         }
 
-        if (tracks.length > 0) {
-          that.discordClient.reply(message, 'Queued ' + tracks.length + ' tracks.');
-        }
+        that.queuedTracks = that.queuedTracks.concat(tracks);
+        that.discordClient.reply(message, 'Queued ' + tracks.length + ' tracks.');
       }
 
       function playOne(track) {
         if (that.isPlaying) {
           that.queuedTracks.push(track);
-          return deferred.resolve('Added song "' + that.formatTrack(track) + '" to queue at position ' + that.queuedTracks.length + '.');
+          return that.discordClient.reply(message, 'Added song "' + that.spotifyHelper.formatTrack(track) + '" to queue at position ' + that.queuedTracks.length + '.');
         }
 
         that.currentTrack = track;
 
         try {
           let stream = track.play().on('error', handleTrackEvent).on('end', handleTrackEvent).on('finish', handleTrackEvent);
+          that.discordClient.setPlayingGame(that.spotifyHelper.formatTrack(track));
+          that.discordClient.reply(message, 'Playing: ' + that.spotifyHelper.formatTrack(track) + (that.queuedTracks.length > 0 ? ' (' + that.queuedTracks.length + ' queued)' : ''));
           that.discordClient.voiceConnection.playRawStream(stream, { volume: that.currentVolume });
-
           that.isPlaying = true;
-          that.discordClient.setPlayingGame(that.formatTrack(track));
-          return deferred.resolve('Playing: ' + that.formatTrack(track));
         } catch (err) {
           handleTrackEvent(err);
-          return deferred.reject(new Error(err));
         }
 
         function handleTrackEvent(err) {
           if (err) {
-            return deferred.reject(new Error(err));
+            that.discordClient.reply(message, err);
           }
 
           that.isPlaying = false;
@@ -117,13 +117,15 @@ module.exports = class SpotifyModule extends DiscordBotModule {
           }
         }
       }
-
-      return deferred.promise;
     };
   }
 
   init(message, params) {
     var deferred = Q.defer();
+
+    if (this.isInit) {
+      return Q.resolve();
+    }
 
     let that = this;
     for (var channel of message.channel.server.channels) {
@@ -132,9 +134,8 @@ module.exports = class SpotifyModule extends DiscordBotModule {
           this.discordClient.joinVoiceChannel(channel)
             .then(() => {
               that.isInit = true;
-              deferred.resolve();
+              return deferred.resolve();
             }).catch(function (error) {
-              console.log(error);
               return deferred.reject(new Error(error));
             });
           break;
@@ -166,25 +167,9 @@ module.exports = class SpotifyModule extends DiscordBotModule {
 
   play(message, params) {
     let that = this;
-    if (!this.isInit) {
-      this.init(message, params).then(function () {
-        that._play(message, params).then(function (result) {
-          that.discordClient.sendMessage(message.channel, result);
-        }, function (err) {
-          that.discordClient.sendMessage(message.channel, err);
-        });
-      });
-    } else {
-      try {
-        this._play(message, params).then(function (result) {
-          that.discordClient.sendMessage(message.channel, result);
-        }, function (err) {
-          that.discordClient.sendMessage(message.channel, err);
-        });
-      } catch (err) {
-        that.discordClient.sendMessage(message.channel, err);
-      }
-    }
+    this.init(message, params).then(function () {
+      that._play(message, params);
+    });
   }
 
   skip(message, params) {
@@ -193,16 +178,12 @@ module.exports = class SpotifyModule extends DiscordBotModule {
     }
 
     if (this.queuedTracks.length === 0) {
-      this.discordClient.sendMessage(message.channel, 'Can\'t skip, no tracks in queue.');
-      return;
+      return this.discordClient.sendMessage(message.channel, 'Can\'t skip, no tracks in queue.');
     }
 
     this.isPlaying = false;
     this.currentTrack = null;
-
-    this.discordClient.sendMessage(message.channel, 'Skipping current track.');
-
-    this.play(message, [this.queuedTracks.pop()]);
+    this._play(message, [this.queuedTracks.pop()]);
   }
 
   stop(message, params) {
@@ -224,6 +205,25 @@ module.exports = class SpotifyModule extends DiscordBotModule {
       return;
     }
 
-    this.discordClient.reply(message, 'Now playing: ' + this.formatTrack(this.currentTrack) + ' (' + this.queuedTracks.length + ' tracks queued).');
+    this.discordClient.reply(message, 'Now playing: ' + this.spotifyHelper.formatTrack(this.currentTrack) + ' (' + this.queuedTracks.length + ' tracks queued).');
+  }
+
+  queue(message, params) {
+    if (this.queuedTracks.length === 0) {
+      return this.discordClient.reply(message, 'There are no tracks queued at the moment.');
+    }
+
+    var reply = 'Currently queued tracks: \n';
+
+    for (let i in this.queuedTracks) {
+      if (i > 10) {
+        reply += 'And ' + (this.queuedTracks.length - 10) + ' more.';
+        break;
+      }
+
+      reply += (parseInt(i) + 1) + '. ' + this.spotifyHelper.formatTrack(this.queuedTracks[i]) + '\n';
+    }
+
+    return this.discordClient.reply(message, reply);
   }
 };

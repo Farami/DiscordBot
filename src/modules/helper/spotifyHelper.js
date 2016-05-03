@@ -42,6 +42,10 @@ module.exports = class SpotifyHelper {
     return deferred.promise;
   }
 
+  formatTrack(track) {
+    return track.artist[0].name + ' - ' + track.name;
+  }
+
   getPlaylistTracks(playlistUri) {
     var deferred = Q.defer();
     this.login().then(function (spotify) {
