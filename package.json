@@ -17,14 +17,14 @@
   "license": "MIT",
   "dependencies": {
     "discord.js": "https://github.com/hydrabolt/discord.js.git#indev",
+    "spotify-web": "git://github.com/Farami/node-spotify-web.git#master",
     "express": "4.13.x",
     "in-array": "^0.1.2",
     "q": "1.4.x",
-    "request": "2.72.x",
-    "spotify-web": "git://github.com/Farami/node-spotify-web.git#master"
+    "request": "2.72.x"
   },
   "engines": {
-    "node": "5.9.1"
+    "node": "4.4.3"
   },
   "devDependencies": {
     "babel-eslint": "^6.0.4",
