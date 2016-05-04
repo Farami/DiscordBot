@@ -8,9 +8,15 @@ module.exports = class SpotifyHelper {
     this.password = password;
   }
 
+  disconnect() {
+    if (this.spotify) {
+      this.spotify.disconnect();
+    }
+  }
+
   login() {
     var deferred = Q.defer();
-    Spotify.login(this.username, this.password, resolve);
+    this.spotify = Spotify.login(this.username, this.password, resolve);
 
     function resolve(err, spotify) {
       if (err) {
@@ -24,10 +30,9 @@ module.exports = class SpotifyHelper {
   };
 
   getAlbumTracks(albumUri) {
-    var deferred = Q.defer();
-    this.get(albumUri).then(function (album) {
+    return this.get(albumUri).then((album) => {
       let tracks = [];
-      album.disc.forEach(function (disc) {
+      album.disc.forEach((disc) => {
         if (!Array.isArray(disc.track)) {
           return;
         }
@@ -35,11 +40,9 @@ module.exports = class SpotifyHelper {
         tracks.push.apply(tracks, disc.track);
       });
 
-      let trackUris = tracks.map(function (value) { return value.uri; });
-      return deferred.resolve(trackUris);
+      let trackUris = tracks.map((value) => { return value.uri; });
+      return trackUris;
     });
-
-    return deferred.promise;
   }
 
   formatTrack(track) {
@@ -47,17 +50,17 @@ module.exports = class SpotifyHelper {
   }
 
   getPlaylistTracks(playlistUri) {
-    var deferred = Q.defer();
-    this.login().then(function (spotify) {
-      spotify.playlist(playlistUri, function (err, playlist) {
+    let deferred = Q.defer();
+    this.login().then((spotify) => {
+      spotify.playlist(playlistUri, (err, playlist) => {
         if (err) {
           return deferred.reject(new Error(err));
         }
 
-        var trackUris = playlist.contents.items.map(function (value) { return value.uri; });
+        var trackUris = playlist.contents.items.map((value) => { return value.uri; });
         return deferred.resolve(trackUris);
       });
-    }, function (err) {
+    }, (err) => {
       return deferred.reject(new Error(err));
     });
 
@@ -96,8 +99,6 @@ module.exports = class SpotifyHelper {
     while (currentIndex !== 0) {
       randomIndex = Math.floor(Math.random() * currentIndex);
       currentIndex -= 1;
-
-      // And swap it with the current element.
       temporaryValue = trackUris[currentIndex];
       trackUris[currentIndex] = trackUris[randomIndex];
       trackUris[randomIndex] = temporaryValue;
