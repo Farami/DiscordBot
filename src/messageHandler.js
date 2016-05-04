@@ -1,6 +1,7 @@
 'use strict';
 const configFile = require('./config.json');
 const inArray = require('in-array');
+const whitelist = require('../whitelist.json');
 
 module.exports = class MessageHandler {
   constructor(client) {
@@ -14,18 +15,20 @@ module.exports = class MessageHandler {
   }
 
   handleMessage(message) {
-    console.log('handledMessage got called with: ' + message);
+    if (!message.content.startsWith(configFile.messagePrefix)) {
+      return;
+    }
+
+    console.log('handleMessage got called with: ' + message);
 
     // dont answer my own messages
     if (message.author === this.client.user) {
       return;
     }
 
-    if (message.author.username === 'Risenx') {
-      return;
-    }
-
-    if (!message.content.startsWith(configFile.messagePrefix)) {
+    // ignore message from people that are not in whitelist
+    // TODO: Rewrite this as a proper rights system
+    if (!inArray(whitelist, message.author.username)) {
       return;
     }
 
