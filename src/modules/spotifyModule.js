@@ -16,33 +16,27 @@ module.exports = class SpotifyModule extends DiscordBotModule {
     this.spotifyHelper = new SpotifyHelper(config.username, config.password);
 
     this._getTracks = (uri) => {
-      let q = Q.defer();
       let that = this;
 
       let uriType = this.spotifyHelper.uriType(uri);
       switch (uriType) {
         case 'track':
-          this.spotifyHelper.get(uri).then(function (track) {
-            return q.resolve([track]);
+          return this.spotifyHelper.get(uri).then(function (track) {
+            return [track];
           });
-          break;
         case 'album':
-          this.spotifyHelper.getAlbumTracks(uri).then(function (tracks) {
-            return q.resolve(tracks);
+          return this.spotifyHelper.getAlbumTracks(uri).then(function (tracks) {
+            return tracks;
           });
-          break;
         case 'playlist':
-          this.spotifyHelper.getPlaylistTracks(uri).then(function (trackUris) {
+          return this.spotifyHelper.getPlaylistTracks(uri).then(function (trackUris) {
             return that.spotifyHelper.get(trackUris);
           }).then(function (tracks) {
-            return q.resolve(tracks);
+            return tracks;
           });
-          break;
         default:
-          return q.reject('unsupported uri type ' + uriType);
+          return Q.defer().reject('unsupported uri type ' + uriType);
       }
-
-      return q.promise;
     };
 
     this._play = (message, params) => {
@@ -70,6 +64,8 @@ module.exports = class SpotifyModule extends DiscordBotModule {
         }
 
         playMultiple(tracks);
+      }).catch(function (err) {
+        that.discordClient.reply(message, err);
       });
 
       function playMultiple(tracks) {
@@ -113,7 +109,9 @@ module.exports = class SpotifyModule extends DiscordBotModule {
           that.discordClient.setPlayingGame(null);
 
           if (that.queuedTracks.length > 0) {
-            that.play(message, [that.queuedTracks.pop()]);
+            that.play(message, [that.queuedTracks.shift()]);
+          } else {
+            that.spotifyHelper.disconnect();
           }
         }
       }
@@ -167,7 +165,7 @@ module.exports = class SpotifyModule extends DiscordBotModule {
 
   play(message, params) {
     let that = this;
-    this.init(message, params).then(function () {
+    this.init(message, params).then(() => {
       that._play(message, params);
     });
   }
@@ -191,7 +189,7 @@ module.exports = class SpotifyModule extends DiscordBotModule {
       return;
     }
 
-    this.discordClient.voiceConnection.stopPlaying().catch(function () { });
+    this.discordClient.voiceConnection.stopPlaying();
     this.discordClient.setPlayingGame(null);
     this.discordClient.reply(message, 'Playback stopped.');
     this.isPlaying = false;
