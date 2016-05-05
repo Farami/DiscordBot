@@ -2,18 +2,33 @@
 const Spotify = require('spotify-web');
 const Q = require('Q');
 
+/**
+ * Offers helper functions for spotify.
+ * @constructor
+ *  @param {string} username - the username.
+ *  @param {string} password - the password.
+ */
 module.exports = class SpotifyHelper {
   constructor(username, password) {
     this.username = username;
     this.password = password;
   }
 
+
+  /**
+   * Disconnects from spotify when connected.
+   */
   disconnect() {
     if (this.spotify) {
       this.spotify.disconnect();
     }
   }
 
+  /**
+   * Logs in to spotify.
+   *
+   * @returns the spotify instance.
+   */
   login() {
     var deferred = Q.defer();
     this.spotify = Spotify.login(this.username, this.password, resolve);
@@ -29,68 +44,101 @@ module.exports = class SpotifyHelper {
     return deferred.promise;
   };
 
-  getAlbumTracks(albumUri) {
-    return this.get(albumUri).then((album) => {
-      let tracks = [];
-      album.disc.forEach((disc) => {
-        if (!Array.isArray(disc.track)) {
-          return;
-        }
-
-        tracks.push.apply(tracks, disc.track);
-      });
-
-      let trackUris = tracks.map((value) => { return value.uri; });
-      return trackUris;
-    });
-  }
-
+  /**
+   * Formats the track as 'Artist - Track'
+   *
+   * @param track The spotify track instance
+   * @returns the formatted string
+   */
   formatTrack(track) {
     return track.artist[0].name + ' - ' + track.name;
   }
 
-  getPlaylistTracks(playlistUri) {
-    let deferred = Q.defer();
-    this.login().then((spotify) => {
-      spotify.playlist(playlistUri, (err, playlist) => {
-        if (err) {
-          return deferred.reject(new Error(err));
-        }
+  /**
+   * Gets the given uri from spotify.
+   *
+   * @param uri the spotify uri.
+   * @returns the given spotify object (track, album...).
+   */
+  get(uri) {
+    let login = this.login();
+    let that = this;
 
-        var trackUris = playlist.contents.items.map((value) => { return value.uri; });
-        return deferred.resolve(trackUris);
-      });
-    }, (err) => {
-      return deferred.reject(new Error(err));
+    let uriType = this.uriType(uri);
+    return login.then((spotify) => {
+      switch (uriType) {
+        case 'track':
+          return spotifyGet(spotify, uri).then((track) => { return [track]; });
+        case 'album':
+          return spotifyGet(spotify, uri).then((album) => {
+            let tracks = [];
+            album.disc.forEach((disc) => {
+              if (!Array.isArray(disc.track)) {
+                return;
+              }
+
+              tracks.push.apply(tracks, disc.track);
+            });
+
+            let trackUris = tracks.map((value) => { return value.uri; });
+            return trackUris;
+          });
+        case 'playlist':
+          let defer = Q.defer();
+          spotify.playlist(uri, (err, playlist) => {
+            if (err) {
+              return defer.reject(new Error(err));
+            }
+
+            var uris = playlist.contents.items.map((value) => { return value.uri; });
+            spotifyGet(that.spotify, uris).then((tracks) => {
+              return defer.resolve(tracks);
+            });
+          });
+
+          return defer.promise;
+        default:
+          return Q.defer().reject('unsupported uri type ' + uriType);
+      }
     });
 
-    return deferred.promise;
-  }
+    /**
+     * Wraps spotify.webs get with a promise.
+     *
+     * @param spotify the spotify instance to use
+     * @param uri the uri to pass to spotifys get
+     * @returns the object returned by spotifys get
+     */
+    function spotifyGet(spotify, uri) {
+      let defer = Q.defer();
+      spotify.get(uri, (err, result) => {
+        if (err) {
+          defer.reject(new Error(err));
+        }
 
-  get(trackUrl) {
-    var deferred = Q.defer();
+        return defer.resolve(result);
+      });
 
-    this.login().then(get, deferred.reject);
-
-    function get(spotify) {
-      spotify.get(trackUrl, resolve);
+      return defer.promise;
     }
-
-    function resolve(err, track) {
-      if (err) {
-        return deferred.reject(err);
-      }
-
-      return deferred.resolve(track);
-    };
-
-    return deferred.promise;
   };
 
+  /**
+   * Returns the uri-type for the given uri-string
+   *
+   * @param uri the uri.
+   * @returns the uri type.
+   */
   uriType(uri) {
     return Spotify.uriType(uri);
   }
 
+  /**
+   * Shuffles the given array.
+   *
+   * @param trackUris the track uris to shuffle.
+   * @returns a shuffled array of the given track uris.
+   */
   shuffle(trackUris) {
     let currentIndex = trackUris.length;
     let temporaryValue;

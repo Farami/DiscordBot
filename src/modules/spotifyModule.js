@@ -15,35 +15,10 @@ module.exports = class SpotifyModule extends DiscordBotModule {
     this.currentVolume = 0.25;
     this.spotifyHelper = new SpotifyHelper(config.username, config.password);
 
-    this._getTracks = (uri) => {
-      let that = this;
-
-      let uriType = this.spotifyHelper.uriType(uri);
-      switch (uriType) {
-        case 'track':
-          return this.spotifyHelper.get(uri).then(function (track) {
-            return [track];
-          });
-        case 'album':
-          return this.spotifyHelper.getAlbumTracks(uri).then(function (tracks) {
-            return tracks;
-          });
-        case 'playlist':
-          return this.spotifyHelper.getPlaylistTracks(uri).then(function (trackUris) {
-            return that.spotifyHelper.get(trackUris);
-          }).then(function (tracks) {
-            return tracks;
-          });
-        default:
-          return Q.defer().reject('unsupported uri type ' + uriType);
-      }
-    };
-
     this._play = (message, params) => {
       let that = this;
-
       if (params === null || params.length === 0) {
-        return that.discordClient.reply(message, 'Please provide a song.');
+        return this.reply(message, 'Please provide a song.', true);
       }
 
       // when the parameter is already a track object don't get the track again, just play it
@@ -58,14 +33,14 @@ module.exports = class SpotifyModule extends DiscordBotModule {
         }
       }
 
-      this._getTracks(params[0]).then(function (tracks) {
+      this.spotifyHelper.get(params[0]).then((tracks) => {
         if (shuffle) {
           tracks = that.spotifyHelper.shuffle(tracks);
         }
 
         playMultiple(tracks);
-      }).catch(function (err) {
-        that.discordClient.reply(message, err);
+      }).catch((err) => {
+        that.reply(message, err);
       });
 
       function playMultiple(tracks) {
@@ -78,13 +53,13 @@ module.exports = class SpotifyModule extends DiscordBotModule {
         }
 
         that.queuedTracks = that.queuedTracks.concat(tracks);
-        that.discordClient.reply(message, 'Queued ' + tracks.length + ' tracks.');
+        that.reply(message, 'Queued ' + tracks.length + ' tracks.', true);
       }
 
       function playOne(track) {
         if (that.isPlaying) {
           that.queuedTracks.push(track);
-          return that.discordClient.reply(message, 'Added song "' + that.spotifyHelper.formatTrack(track) + '" to queue at position ' + that.queuedTracks.length + '.');
+          that.reply(message, 'Added song "' + that.spotifyHelper.formatTrack(track) + '" to queue at position ' + that.queuedTracks.length + '.', true);
         }
 
         that.currentTrack = track;
@@ -92,7 +67,7 @@ module.exports = class SpotifyModule extends DiscordBotModule {
         try {
           let stream = track.play().on('error', handleTrackEvent).on('end', handleTrackEvent).on('finish', handleTrackEvent);
           that.discordClient.setPlayingGame(that.spotifyHelper.formatTrack(track));
-          that.discordClient.reply(message, 'Playing: ' + that.spotifyHelper.formatTrack(track) + (that.queuedTracks.length > 0 ? ' (' + that.queuedTracks.length + ' queued)' : ''));
+          that.reply(message, 'Playing: ' + that.spotifyHelper.formatTrack(track) + (that.queuedTracks.length > 0 ? ' (' + that.queuedTracks.length + ' queued)' : ''), true);
           that.discordClient.voiceConnection.playRawStream(stream, { volume: that.currentVolume });
           that.isPlaying = true;
         } catch (err) {
@@ -101,7 +76,7 @@ module.exports = class SpotifyModule extends DiscordBotModule {
 
         function handleTrackEvent(err) {
           if (err) {
-            that.discordClient.reply(message, err);
+            that.reply(message, err);
           }
 
           that.isPlaying = false;
@@ -146,21 +121,21 @@ module.exports = class SpotifyModule extends DiscordBotModule {
 
   volume(message, params) {
     if (params.length === 0) {
-      this.discordClient.reply(message, 'Parameter needed.');
+      this.reply(message, 'Parameter needed.', true);
       return;
     }
 
     try {
       this.currentVolume = parseFloat(params[0]);
     } catch (err) {
-      this.discordClient.reply(message, 'Parameter needs to be a float.');
+      this.reply(message, 'Parameter needs to be a float.', true);
     }
 
     if (this.discordClient.voiceConnection !== undefined) {
       this.discordClient.voiceConnection.setVolume(this.currentVolume);
     }
 
-    this.discordClient.reply(message, 'Set volume to ' + this.currentVolume);
+    this.reply(message, 'Set volume to ' + this.currentVolume, true);
   }
 
   play(message, params) {
@@ -176,12 +151,12 @@ module.exports = class SpotifyModule extends DiscordBotModule {
     }
 
     if (this.queuedTracks.length === 0) {
-      return this.discordClient.sendMessage(message.channel, 'Can\'t skip, no tracks in queue.');
+      return this.sendMessage(message.channel, 'Can\'t skip, no tracks in queue.', true);
     }
 
     this.isPlaying = false;
     this.currentTrack = null;
-    this._play(message, [this.queuedTracks.pop()]);
+    this._play(message, [this.queuedTracks.shift()]);
   }
 
   stop(message, params) {
@@ -191,7 +166,7 @@ module.exports = class SpotifyModule extends DiscordBotModule {
 
     this.discordClient.voiceConnection.stopPlaying();
     this.discordClient.setPlayingGame(null);
-    this.discordClient.reply(message, 'Playback stopped.');
+    this.reply(message, 'Playback stopped.', true);
     this.isPlaying = false;
     this.currentTrack = null;
     this.queuedTracks = [];
@@ -199,20 +174,19 @@ module.exports = class SpotifyModule extends DiscordBotModule {
 
   np(message, params) {
     if (!this.isPlaying) {
-      this.discordClient.reply(message, 'I am not playing anything right now.');
+      this.reply(message, 'I am not playing anything right now.', true);
       return;
     }
 
-    this.discordClient.reply(message, 'Now playing: ' + this.spotifyHelper.formatTrack(this.currentTrack) + ' (' + this.queuedTracks.length + ' tracks queued).');
+    this.reply(message, 'Now playing: ' + this.spotifyHelper.formatTrack(this.currentTrack) + ' (' + this.queuedTracks.length + ' tracks queued).', true);
   }
 
   queue(message, params) {
     if (this.queuedTracks.length === 0) {
-      return this.discordClient.reply(message, 'There are no tracks queued at the moment.');
+      return this.reply(message, 'There are no tracks queued at the moment.', true);
     }
 
     var reply = 'Currently queued tracks: \n';
-
     for (let i in this.queuedTracks) {
       if (i > 10) {
         reply += 'And ' + (this.queuedTracks.length - 10) + ' more.';
@@ -222,6 +196,6 @@ module.exports = class SpotifyModule extends DiscordBotModule {
       reply += (parseInt(i) + 1) + '. ' + this.spotifyHelper.formatTrack(this.queuedTracks[i]) + '\n';
     }
 
-    return this.discordClient.reply(message, reply);
+    return this.discordClient.reply(message, reply, true);
   }
 };
