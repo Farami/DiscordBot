@@ -65,7 +65,7 @@ module.exports = class SpotifyModule extends DiscordBotModule {
         that.currentTrack = track;
 
         try {
-          let stream = track.play().on('error', handleTrackEvent).on('end', handleTrackEvent).on('finish', handleTrackEvent);
+          let stream = track.play().on('error', handleTrackEvent).on('finish', handleTrackEvent);
           that.discordClient.setPlayingGame(that.spotifyHelper.formatTrack(track));
           that.reply(message, 'Playing: ' + that.spotifyHelper.formatTrack(track) + (that.queuedTracks.length > 0 ? ' (' + that.queuedTracks.length + ' queued)' : ''), true);
           that.discordClient.voiceConnection.playRawStream(stream, { volume: that.currentVolume });
