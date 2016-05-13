@@ -97,7 +97,7 @@ module.exports = class SpotifyModule extends DiscordBotModule {
     var deferred = Q.defer();
 
     if (this.isInit) {
-      return deferred.resolve();
+      return Q.resolve();
     }
 
     let that = this;
