@@ -1,5 +1,5 @@
 'use strict';
-const configFile = require('./config.json');
+const configFile = require('../config.json');
 const inArray = require('in-array');
 const whitelist = require('../whitelist.json');
 
