@@ -62,7 +62,6 @@ module.exports = class SpotifyHelper {
    */
   get(uri) {
     let that = this;
-    let defer = Q.defer();
 
     let uriType = this.uriType(uri);
     return this.login().then((spotify) => {
@@ -85,14 +84,17 @@ module.exports = class SpotifyHelper {
             return spotifyGet(that.spotify, trackUris);
           });
         case 'playlist':
-          return spotify.playlist(uri, (err, playlist) => {
+          let defer = Q.defer();
+          spotify.playlist(uri, (err, playlist) => {
             if (err) {
               return defer.reject(new Error(err));
             }
 
             let uris = playlist.contents.items.map((value) => { return value.uri; });
-            return spotifyGet(that.spotify, uris);
+            spotifyGet(that.spotify, uris).then((tracks) => { return defer.resolve(tracks); });
           });
+
+          return defer.promise;
         default:
           return Q.defer().reject('unsupported uri type ' + uriType);
       }
