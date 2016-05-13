@@ -61,11 +61,11 @@ module.exports = class SpotifyHelper {
    * @returns the given spotify object (track, album...).
    */
   get(uri) {
-    let login = this.login();
     let that = this;
+    let defer = Q.defer();
 
     let uriType = this.uriType(uri);
-    return login.then((spotify) => {
+    return this.login().then((spotify) => {
       switch (uriType) {
         case 'track':
           return spotifyGet(spotify, uri).then((track) => { return [track]; });
@@ -80,23 +80,19 @@ module.exports = class SpotifyHelper {
               tracks.push.apply(tracks, disc.track);
             });
 
-            let trackUris = tracks.map((value) => { return value.uri; });
-            return trackUris;
+            return tracks.map((value) => { return value.uri; });
+          }).then((trackUris) => {
+            return spotifyGet(that.spotify, trackUris);
           });
         case 'playlist':
-          let defer = Q.defer();
-          spotify.playlist(uri, (err, playlist) => {
+          return spotify.playlist(uri, (err, playlist) => {
             if (err) {
               return defer.reject(new Error(err));
             }
 
-            var uris = playlist.contents.items.map((value) => { return value.uri; });
-            spotifyGet(that.spotify, uris).then((tracks) => {
-              return defer.resolve(tracks);
-            });
+            let uris = playlist.contents.items.map((value) => { return value.uri; });
+            return spotifyGet(that.spotify, uris);
           });
-
-          return defer.promise;
         default:
           return Q.defer().reject('unsupported uri type ' + uriType);
       }
@@ -131,7 +127,7 @@ module.exports = class SpotifyHelper {
    */
   uriType(uri) {
     return Spotify.uriType(uri);
-  }
+  };
 
   /**
    * Shuffles the given array.

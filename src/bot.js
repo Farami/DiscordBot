@@ -18,6 +18,7 @@ require('fs').readdirSync(modulesPath).forEach(function (file) {
 client.on('message', (message) => messageHandler.handleMessage(message));
 
 exports.init = (email, password) => client.login(email, password).then(success).catch(error);
+exports.disconnect = () => client.logout();
 
 function success(token) {
   console.log('Connected.');

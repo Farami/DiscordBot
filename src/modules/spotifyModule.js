@@ -97,20 +97,19 @@ module.exports = class SpotifyModule extends DiscordBotModule {
     var deferred = Q.defer();
 
     if (this.isInit) {
-      return Q.resolve();
+      return deferred.resolve();
     }
 
     let that = this;
     for (var channel of message.channel.server.channels) {
       if (channel instanceof this.discord.VoiceChannel) {
         if (channel.name === config.voiceChannelName) {
-          this.discordClient.joinVoiceChannel(channel)
-            .then(() => {
-              that.isInit = true;
-              return deferred.resolve();
-            }).catch(function (error) {
-              return deferred.reject(new Error(error));
-            });
+          this.discordClient.joinVoiceChannel(channel).then(() => {
+            that.isInit = true;
+            return deferred.resolve(true);
+          }).catch(function (error) {
+            return deferred.reject(new Error(error));
+          });
           break;
         }
       }
@@ -121,8 +120,7 @@ module.exports = class SpotifyModule extends DiscordBotModule {
 
   volume(message, params) {
     if (params.length === 0) {
-      this.reply(message, 'Parameter needed.', true);
-      return;
+      return this.reply(message, 'Parameter needed.', true);
     }
 
     try {
