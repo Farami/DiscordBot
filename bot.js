@@ -18,7 +18,7 @@ require('fs').readdirSync(modulesPath).forEach(function (file) {
 
 client.on('message', (message) => messageHandler.handleMessage(message));
 
-client.login(configFile.discordEmail, configFile.discordPassword).then(function (token) {
+client.loginWithToken(configFile.discordToken).then(function (token) {
   console.log('Connected.');
 }).catch(function (error) {
   console.log('Error: ' + error);
