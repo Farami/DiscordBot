@@ -1,4 +1,15 @@
 {
   "messagePrefix": "!",
-  "discordToken": "MTgwODE3MzU4MDA3MzA0MTky.ChfuyQ.lU_zyScLjG4OU07f1Bu5Oa7ovBY"
+  "discordToken": "MTgwODE3MzU4MDA3MzA0MTky.ChfuyQ.lU_zyScLjG4OU07f1Bu5Oa7ovBY",
+  "spotifyModule": {
+    "username": "deineMudda",
+    "password": "deineMudda",
+    "voiceChannelName": "Hurensöhne"
+  },
+  "jokeModule": {
+    "sources": {
+      "joke": "http://tambal.azurewebsites.net/joke/random",
+      "yomomma": "http://api.yomomma.info/"
+    }
+  }
 }

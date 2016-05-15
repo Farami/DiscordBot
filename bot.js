@@ -5,14 +5,16 @@ const MessageHandler = require('./src/messageHandler.js');
 const modulesPath = require('path').join(__dirname, './src/modules');
 const messageHandler = new MessageHandler(client);
 
-
 require('fs').readdirSync(modulesPath).forEach(function (file) {
-  if (file.split('.')[1] !== 'js') {
+  let moduleSplit = file.split('.');
+  
+  if (moduleSplit[1] !== 'js') {
     return;
   }
-
+  
+  let configObjekt = configFile[moduleSplit[0]];
   let DiscordModule = require('./src/modules/' + file);
-  let newModule = new DiscordModule(client);
+  let newModule = new DiscordModule(client, configObjekt);
   messageHandler.registerModule(newModule);
 });
 
@@ -23,6 +25,3 @@ client.loginWithToken(configFile.discordToken).then(function (token) {
 }).catch(function (error) {
   console.log('Error: ' + error);
 });
-
-
-

@@ -1,14 +1,13 @@
 'use strict';
 const SpotifyHelper = require('./helper/spotifyHelper.js');
 const DiscordBotModule = require('../discordBotModule.js');
-const config = require('./spotifyModule.json');
 const Q = require('Q');
 
 module.exports = class SpotifyModule extends DiscordBotModule {
-  constructor(discordClient) {
+  constructor(discordClient, config) {
     let commands = ['init', 'play', 'np', 'skip', 'stop', 'volume', 'queue'];
     super('SpotifyModule', commands, discordClient);
-
+    this.config = config;
     this.isPlaying = false;
     this.isInit = false;
     this.queuedTracks = [];
@@ -103,7 +102,7 @@ module.exports = class SpotifyModule extends DiscordBotModule {
     let that = this;
     for (var channel of message.channel.server.channels) {
       if (channel instanceof this.discord.VoiceChannel) {
-        if (channel.name === config.voiceChannelName) {
+        if (channel.name === this.config.voiceChannelName) {
           this.discordClient.joinVoiceChannel(channel).then(() => {
             that.isInit = true;
             return deferred.resolve(true);
