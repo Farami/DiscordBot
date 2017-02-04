@@ -1,10 +1,8 @@
 {
   "messagePrefix": "!",
   "discordToken": "MTgwODE3MzU4MDA3MzA0MTky.ChfuyQ.lU_zyScLjG4OU07f1Bu5Oa7ovBY",
-  "spotifyModule": {
-    "username": "deineMudda",
-    "password": "deineMudda",
-    "voiceChannelName": "Hurensöhne"
+  "youtubeModule": {
+    "voiceChannelName": "Lutscher"
   },
   "jokeModule": {
     "sources": {

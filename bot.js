@@ -7,11 +7,11 @@ const messageHandler = new MessageHandler(client);
 
 require('fs').readdirSync(modulesPath).forEach(function (file) {
   let moduleSplit = file.split('.');
-  
+
   if (moduleSplit[1] !== 'js') {
     return;
   }
-  
+
   let configObjekt = configFile[moduleSplit[0]];
   let DiscordModule = require('./src/modules/' + file);
   let newModule = new DiscordModule(client, configObjekt);
@@ -20,7 +20,7 @@ require('fs').readdirSync(modulesPath).forEach(function (file) {
 
 client.on('message', (message) => messageHandler.handleMessage(message));
 
-client.loginWithToken(configFile.discordToken).then(function (token) {
+client.login(configFile.discordToken).then(function (token) {
   console.log('Connected.');
 }).catch(function (error) {
   console.log('Error: ' + error);
