@@ -14,7 +14,6 @@ module.exports = class SpotifyHelper {
     this.password = password;
   }
 
-
   /**
    * Disconnects from spotify when connected.
    */
@@ -30,7 +29,7 @@ module.exports = class SpotifyHelper {
    * @returns the spotify instance.
    */
   login() {
-    var deferred = Q.defer();
+    let deferred = Q.defer();
     this.spotify = Spotify.login(this.username, this.password, resolve);
 
     function resolve(err, spotify) {

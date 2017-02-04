@@ -45,7 +45,7 @@ module.exports = class DiscordBotModule {
   queueMessageForRemoval(message, time) {
     time = time || 10000;
 
-    var q = Q.defer();
+    let q = Q.defer();
     this.discordClient.deleteMessage(message, { wait: time }, () => { q.resolve(true); });
     return q.promise;
   }

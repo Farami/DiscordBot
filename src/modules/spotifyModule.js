@@ -16,7 +16,7 @@ module.exports = class SpotifyModule extends DiscordBotModule {
 
     this._play = (message, params) => {
       let that = this;
-      if (params === null || params.length === 0) {
+      if (params[0] === undefined) {
         return this.reply(message, 'Please provide a song.', true);
       }
 
@@ -25,11 +25,9 @@ module.exports = class SpotifyModule extends DiscordBotModule {
         return playOne(params[0]);
       }
 
-      var shuffle = false;
-      if (params.length > 1) {
-        if (params[1] === 'shuffle') {
-          shuffle = true;
-        }
+      let shuffle = false;
+      if (params[1] === 'shuffle') {
+        shuffle = true;
       }
 
       this.spotifyHelper.get(params[0]).then((tracks) => {
@@ -93,14 +91,14 @@ module.exports = class SpotifyModule extends DiscordBotModule {
   }
 
   init(message, params) {
-    var deferred = Q.defer();
+    let deferred = Q.defer();
 
     if (this.isInit) {
       return Q.resolve();
     }
 
     let that = this;
-    for (var channel of message.channel.server.channels) {
+    for (let channel of message.channel.server.channels) {
       if (channel instanceof this.discord.VoiceChannel) {
         if (channel.name === this.config.voiceChannelName) {
           this.discordClient.joinVoiceChannel(channel).then(() => {
@@ -183,7 +181,7 @@ module.exports = class SpotifyModule extends DiscordBotModule {
       return this.reply(message, 'There are no tracks queued at the moment.', true);
     }
 
-    var reply = 'Currently queued tracks: \n';
+    let reply = 'Currently queued tracks: \n';
     for (let i in this.queuedTracks) {
       if (i > 10) {
         reply += 'And ' + (this.queuedTracks.length - 10) + ' more.';
