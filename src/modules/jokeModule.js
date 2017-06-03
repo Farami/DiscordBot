@@ -10,14 +10,15 @@ module.exports = class JokeModule extends DiscordBotModule {
   }
 
   joke(message, params) {
+    let that = this;
+
     if (params.length === 0) {
       // gets a random key from the sources
       let keys = Object.keys(this.config.sources);
-      params[0] = keys[keys.length * Math.random() << 0];
+      params[0] = keys[keys.length * Math.random() << 0]; // TODO do not modify incoming variable.
     }
 
     try {
-      let that = this;
       request(that.config.sources[params[0]], function (error, response, body) {
         if (!error && response.statusCode === 200) {
           that.discordClient.reply(message, JSON.parse(body).joke);

@@ -15,16 +15,15 @@ module.exports = class YoutubeModule extends DiscordBotModule {
   }
 
   init(message, params) {
+    let that = this;
     let deferred = Q.defer();
 
     if (this.voiceConnection) {
       return Q.resolve(this.voiceConnection);
     }
 
-    let that = this;
-
     console.log("Trying to join voice channel: " + this.config.voiceChannelName);
-    var channel = that.discordClient.channels.filter((item) => item.type === 'voice' && item.name === this.config.voiceChannelName).values().next().value;
+    var channel = this.discordClient.channels.filter((item) => item.type === 'voice' && item.name === this.config.voiceChannelName).values().next().value;
     if (channel === undefined) {
       return deferred.reject(null); // TODO send proper error up the chain, this will just fail with a .then undefined
     }
@@ -47,7 +46,7 @@ module.exports = class YoutubeModule extends DiscordBotModule {
     try {
       this.currentVolume = parseFloat(params[0]);
     } catch (err) {
-      this.reply(message, 'Parameter needs to be a float.', true);
+      this.reply(message, 'Volume needs to be a number.', true);
     }
 
     if (this.dispatcher !== undefined) {
@@ -204,9 +203,11 @@ module.exports = class YoutubeModule extends DiscordBotModule {
     if (hours < 10) {
       hours = "0" + hours;
     }
+
     if (minutes < 10) {
       minutes = "0" + minutes;
     }
+
     if (seconds < 10) {
       seconds = "0" + seconds;
     }
