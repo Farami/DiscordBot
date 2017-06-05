@@ -31,7 +31,7 @@ module.exports = class DiscordBotModule {
    *
    * @returns The list of implemented commands.
    */
-  commands() {
+  get commands() {
     return this.commandList;
   }
 
@@ -46,7 +46,8 @@ module.exports = class DiscordBotModule {
     time = time || 10000;
 
     let q = Q.defer();
-    this.discordClient.deleteMessage(message, { wait: time }, () => { q.resolve(true); });
+
+    message.delete(time).then(() => { q.resolve(true); });
     return q.promise;
   }
 
@@ -61,7 +62,7 @@ module.exports = class DiscordBotModule {
     removeAfter = removeAfter || false;
 
     let that = this;
-    this.discordClient.sendMessage(channel, text, (err, sentMessage) => {
+    channel.sendMessage(channel, text, (err, sentMessage) => {
       if (err) {
         return;
       }
@@ -83,11 +84,7 @@ module.exports = class DiscordBotModule {
     removeAfter = removeAfter || false;
 
     let that = this;
-    this.discordClient.reply(message, text, (err, sentMessage) => {
-      if (err) {
-        return;
-      }
-
+    message.reply(text).then((sentMessage) => {
       if (removeAfter) {
         that.queueMessageForRemoval(sentMessage);
       }

@@ -1,7 +1,10 @@
 {
-  "name": "DiscordSpotifyPlayer",
+  "name": "discordbot",
   "version": "1.0.0",
-  "description": "Spotify Player for Discord",
+  "description": "Extensible Discord Bot",
+  "scripts": {
+    "start": "node bot"
+  },
   "author": {
     "name": "Farami",
     "email": "niclas@farami.de",
@@ -16,12 +19,13 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "discord.js": "https://github.com/hydrabolt/discord.js.git#indev",
-    "spotify-web": "git://github.com/Farami/node-spotify-web.git#master",
+    "discord.js": "11.0.0",
     "express": "4.13.x",
     "in-array": "^0.1.2",
     "q": "1.4.x",
-    "request": "2.72.x"
+    "request": "2.72.x",
+    "ytdl-core": "0.8.1",
+    "node-opus": "0.2.4"
   },
   "engines": {
     "node": "4.4.3"

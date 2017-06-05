@@ -15,6 +15,8 @@ module.exports = class MessageHandler {
   }
 
   handleMessage(message) {
+    function extractCommand(params) { return params.shift().substring(1); }
+
     if (!message.content.startsWith(configFile.messagePrefix)) {
       return;
     }
@@ -33,7 +35,7 @@ module.exports = class MessageHandler {
     }
 
     let params = message.content.split(' ');
-    let command = params.shift().substring(1);
+    let command = extractCommand(params);
 
     if (command === 'modules') {
       this.handleModulesCommand(message);
@@ -41,7 +43,7 @@ module.exports = class MessageHandler {
     }
 
     for (let m of this.modules) {
-      if (inArray(m.commands(), command)) {
+      if (inArray(m.commands, command)) {
         m[command](message, params);
       }
     }
@@ -51,7 +53,7 @@ module.exports = class MessageHandler {
     let text = '\nCurrently installed modules: \n';
 
     for (let m of this.modules) {
-      text += '- ' + m.name + '\n';
+      text += `- ${m.name}\n`;
     }
 
     this.client.reply(message, text);
