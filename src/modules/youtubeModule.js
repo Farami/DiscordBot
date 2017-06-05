@@ -1,6 +1,6 @@
 'use strict';
 const DiscordBotModule = require('../discordBotModule.js');
-var ytdl = require('ytdl-core');
+const ytdl = require('ytdl-core');
 const Q = require('Q');
 
 module.exports = class YoutubeModule extends DiscordBotModule {

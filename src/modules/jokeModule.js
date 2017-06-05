@@ -34,13 +34,11 @@ module.exports = class JokeModule extends DiscordBotModule {
       return;
     }
 
-    if (params.length === 0) {
-      params[0] = 5;
-    }
+    var interval = params[0] || 5;
 
     let that = this;
-    this.jokeTimer = setInterval(() => that.joke(message, []), params[0] * 1000);
-    this.discordClient.reply(message, 'Posting joke every ' + params[0] + ' seconds');
+    this.jokeTimer = setInterval(() => that.joke(message, []), interval * 1000);
+    this.discordClient.reply(message, 'Posting joke every ' + interval + ' seconds');
   }
 
   stopJokes(message, params) {

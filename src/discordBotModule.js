@@ -31,7 +31,7 @@ module.exports = class DiscordBotModule {
    *
    * @returns The list of implemented commands.
    */
-  commands() {
+  get commands() {
     return this.commandList;
   }
 
