@@ -1,5 +1,6 @@
-# SpotifyDiscordBot
-[![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](http://standardjs.com)
+# DiscordBot
+
+Comes with a Youtube module.
 
 ## Modules
 To write a module simply create a .js file inside the src/modules folder.
@@ -23,16 +24,10 @@ module.exports = class JokeModule extends DiscordBotModule {
 ```
 
 ### Configs for your modules
-If you need a configuration file for your module we recommend
-adding a .json file with the name of your module inside the modules folder.
-You can then `require` the config and use it.
-
-```javascript
-const config = require('./moduleConfig.json');
-```
+Just add any settings you require into the config.json. They will get passed to the module as second parameter.
 
 ## Installation
 Simply run `npm install`
 
 ## Running the bot
-Run the bot with `node app.js` after installing the dependencies.
+Run the bot with `node app.js` or `npm start` after installing the dependencies.
