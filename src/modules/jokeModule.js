@@ -21,11 +21,11 @@ module.exports = class JokeModule extends DiscordBotModule {
     try {
       request(that.config.sources[params[0]], function (error, response, body) {
         if (!error && response.statusCode === 200) {
-          that.discordClient.reply(message, JSON.parse(body).joke);
+          that.reply(message, JSON.parse(body).joke);
         }
       });
     } catch (err) {
-      this.discordClient.reply(message, 'Error: Service down or unknown source.');
+      this.reply(message, 'Error: Service down or unknown source.');
     }
   }
 
@@ -38,11 +38,11 @@ module.exports = class JokeModule extends DiscordBotModule {
 
     let that = this;
     this.jokeTimer = setInterval(() => that.joke(message, []), interval * 1000);
-    this.discordClient.reply(message, 'Posting joke every ' + interval + ' seconds');
+    this.reply(message, 'Posting joke every ' + interval + ' seconds');
   }
 
   stopJokes(message, params) {
-    this.discordClient.reply(message, 'Aww.');
+    this.reply(message, 'Aww.');
     clearInterval(this.jokeTimer);
   }
 };
