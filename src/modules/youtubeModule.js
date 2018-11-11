@@ -5,7 +5,7 @@ const Q = require('Q');
 
 module.exports = class YoutubeModule extends DiscordBotModule {
   constructor(discordClient, config) {
-    let commands = ['play', 'np', 'skip', 'stop', 'volume', 'queue'];
+    let commands = ['init', 'play', 'np', 'skip', 'stop', 'volume', 'queue'];
     super('YoutubeModule', commands, discordClient);
     this.config = config;
     this.isPlaying = false;
